@@ -8,10 +8,16 @@
  */
 void exec_command(char *input, int *exit_status)
 {
-	char *tokens[64]; /* Assuming 64 arguments max */
 	int token_count;
 	pid_t pid = fork();
 
+	char **tokens = malloc(MAX_TOKENS * sizeof(char *));
+
+	if (tokens == NULL)
+	{
+		perror("Memory allocation error");
+		exit(EXIT_FAILURE);
+	}
 	if (pid == -1)
 	{
 		perror("Forking error");
@@ -23,8 +29,10 @@ void exec_command(char *input, int *exit_status)
 		parse_line(input, tokens, &token_count);
 
 		if (tokens[0] == NULL)
+		{
+			free(tokens);
 			exit(EXIT_SUCCESS);
-
+		}
 		find_executable(tokens[0], tokens);
 		execute_command(tokens);
 	}
@@ -34,11 +42,11 @@ void exec_command(char *input, int *exit_status)
 		int status;
 
 		waitpid(pid, &status, 0);
-
 		if (WIFEXITED(status))
 			*exit_status = WEXITSTATUS(status);
 		else
 			*exit_status = 1;
+		free(tokens);
 	}
 }
 
@@ -53,26 +61,32 @@ void find_executable(char *command, char *tokens[])
 {
 	if (access(command, X_OK) == -1)
 	{
-		char *path = getenv("PATH");
+		char *path = getenv("PATH"), *dir;
 		char *path_copy = strdup(path);
-		char *dir = strtok(path_copy, ":");
+
+		if (path_copy == NULL)
+		{
+			perror("Memory allocation error");
+			exit(EXIT_FAILURE);
+		}
+		dir = strtok(path_copy, ":");
 
 		while (dir != NULL)
 		{
 			char full_path[PATH_MAX];
 
 			snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
-
 			if (access(full_path, X_OK) == 0)
 			{
-				if (execve(full_path, tokens, NULL) != -1)
+				if (execve(full_path, tokens, NULL) == -1)
 				{
-					free(path_copy);
-					return;
+					perror("Error in execve execution");
+					exit(EXIT_FAILURE);
 				}
 			}
 			dir = strtok(NULL, ":");
 		}
+		free(path_copy);
 		if (errno == ENOENT)
 		{
 			fprintf(stderr, "%s: command not recognized\n", command);
