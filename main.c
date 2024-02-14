@@ -63,7 +63,13 @@ void parse_line(char *input, char **tokens, int *token_count)
 	token = strtok(input, " ");
 	while (token != NULL)
 	{
-		tokens[(*token_count)++] = token;
+		tokens[*token_count] = strdup(token);
+		if (tokens[*token_count] == NULL)
+		{
+			perror("Memory allocation error");
+			exit(EXIT_FAILURE);
+		}
+		(*token_count)++;
 		token = strtok(NULL, " ");
 	}
 
