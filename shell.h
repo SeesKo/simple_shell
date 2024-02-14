@@ -15,6 +15,8 @@
 /* ENVIRONMENT VARIABLES */
 extern char **environ;
 
+#define MAX_TOKENS 64
+
 /* USER-DEFINED FUNCTION PROTOTYPES */
 void prompt_me(void);
 char *read_line(void);
