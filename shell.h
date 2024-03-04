@@ -13,5 +13,6 @@
 void display_prompt(void);
 char *read_user_input(void);
 void execute_command(char *command);
+size_t _strlen(const char *str);
 
 #endif /* SHELL_H */
