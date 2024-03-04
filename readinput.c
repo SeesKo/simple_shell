@@ -19,40 +19,45 @@ char *read_user_input(void) {
     return buffer;
 }
 
-void execute_command(char *command) {
+void execute_command(char *command) 
+{
     pid_t pid = fork();
 
-    if (pid == -1) {
+    if (pid == -1) 
+    {
         perror("fork");
         free(command);
         exit(EXIT_FAILURE);
     }
-
-    if (pid == 0) {
-        char **argv = (char **)malloc(2 * sizeof(char *));
-        if (argv == NULL) {
+    if (pid == 0) 
+    {
+	    int i = 0;
+        char *token;
+        char **argv = (char **)malloc(BUFFER_SIZE * sizeof(char *));
+        if (argv == NULL) 
+        {
             perror("malloc");
             free(command);
             exit(EXIT_FAILURE);
         }
-
-        argv[0] = command;
-        argv[1] = NULL;
-
-        if (execve(command, argv, NULL) == -1) {
-            perror(command);
+        token = strtok(command, " ");
+        while (token != NULL) {
+            argv[i++] = token;
+            token = strtok(NULL, " ");
+        }
+        argv[i] = NULL;
+        if (execvp(argv[0], argv) == -1) 
+        {
+            perror(argv[0]);
             free(command);
             free(argv);
             exit(EXIT_FAILURE);
         }
-
-        free(argv);
     } else {
         int status;
         waitpid(pid, &status, 0);
 
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) 
             fprintf(stderr, "./shell: %s: command not found\n", command);
-        }
     }
 }
